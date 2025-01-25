@@ -1,38 +1,37 @@
 package servidor;
- 
-import servidor.comunicação.*;
+
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.*;
 
 public class Servidor {
+	static final int NUMERO = 5;
+	static final int PORTA = 10000;
+	
+	static PrintWriter [] saidas = new PrintWriter[NUMERO];
+	
 	public static void main(String[] args) {
-		final int porta = 10000;
+		for (@SuppressWarnings("unused") PrintWriter saida : saidas)
+			saida = null;
 		
+		ExecutorService clientes = Executors.newFixedThreadPool(NUMERO);
 		
-		GestorDeClientes gestor = new GestorDeClientes(5);
-		
-		try (ServerSocket servidor = new ServerSocket(porta)) {
-			
-			Socket cliente;
-			RecebimentoDeMensagem rec = new RecebimentoDeMensagem(servidor);
-			
+		try (ServerSocket servidor = new ServerSocket(PORTA)) {
+			System.out.println("Servidor iniciado ;)\n");
 			while (true) {
-				cliente = servidor.accept();
+				Socket cliente = servidor.accept();
 				
 				if (cliente.isConnected()) {
-					gestor.adicionar(cliente);
+					System.out.println("Novo cliente conectado =)");
+					GestorDeClientes gestor = new GestorDeClientes(cliente);
+					gestor.adicionarLista(saidas);
+					clientes.execute(gestor);
+					
 				}
-				
-				
-				
 			}
-			
-		}
-		
-		catch (IOException e) {
+		} 
+		catch (IOException e){
 			System.err.println("Erro ao iniciar o servidor: " + e.getMessage());
 		}
-		
 	}
-
 }
