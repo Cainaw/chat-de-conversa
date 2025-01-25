@@ -4,45 +4,51 @@ import java.io.*;
 import java.net.*;
 
 public class Cliente {
-
+	static final int PORTA = 10000;
+	static final String LOCAL = "localhost";
+	
 	public static void main(String[] args) {
-		String endereco = "localhost";
-		int porta = 10000;
 		
-		try (Socket cliente = new Socket(endereco, porta)) {
-			System.out.println("Conexão realizada\n");
-			
-			try (
-				BufferedReader entrada = new BufferedReader(new InputStreamReader(cliente.getInputStream()));
-				BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
-				PrintWriter saida = new PrintWriter(cliente.getOutputStream(), true);
-			) {
-				System.out.println("- Chat de comunicação ativo -");
-				String mensagem;
-				
-				while (true) {
-					System.out.print("Você: ");
-					mensagem = teclado.readLine();
-					
-					if (mensagem.equalsIgnoreCase("sair")) {
-						saida.println("sair");
-						break;
+		
+		
+		try (Socket cliente = new Socket(LOCAL, PORTA)) {
+			new Thread (() -> {
+				try (BufferedReader entrada = new BufferedReader(new InputStreamReader(cliente.getInputStream()))) {
+					String mensagemServidor;
+					while ((mensagemServidor = entrada.readLine()) != null) {
+						System.out.println(mensagemServidor);
 					}
-					
-					saida.println("Cliente: " + mensagem);
-					System.out.println(entrada.readLine());
 				}
+				catch (IOException e) {
+					System.err.println("Desconectado pelo servidor: " + e.getMessage());
+					try {
+						cliente.close();
+					} 
+					catch (IOException e1) {
+						System.err.println("Erro ao fechar socket: " + e1.getMessage());
+					}
+					System.out.println("Cliente desconectado");
+					return;
+				}
+			}).start();
+			
+			BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
+			PrintWriter saida = new PrintWriter(cliente.getOutputStream(), true);
+			
+			String mensagem;
+			while (true) {
+				System.out.print("Você: ");
+				mensagem =  teclado.readLine();
 				
-				System.out.println("Conexão fechada");
+				if (mensagem.equalsIgnoreCase("sair"))
+					break;
+				
+				saida.println("Cliente: " + mensagem);
+				
 			}
-
-		}
-		catch (UnknownHostException e) {
-			System.err.println("Servidor não encontrado");
 		}
 		catch (IOException e) {
-			System.err.println("Erro ao se conectar ao servidor: " + e.getMessage());
+			System.err.println("Erro ao iniciar cliente: " + e.getMessage());
 		}
 	}
-
 }
