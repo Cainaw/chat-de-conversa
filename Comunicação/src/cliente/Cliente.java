@@ -4,13 +4,20 @@ import java.io.*;
 import java.net.*;
 
 public class Cliente {
-	static final int PORTA = 10000;
-	static final String LOCAL = "localhost";
+	private static String LOCAL = "localhost";
+	private static int PORTA;
 	
-	public static void main(String[] args) {
+	// adicionar funcionalidade mais tarde
+	//private String nome;
+	
+	public Cliente (String nome, int porta) {
+		Cliente.PORTA = porta;
+		//this.nome = nome;
 		
-		
-		
+		executarCliente();
+	}
+	
+	private void executarCliente() {
 		try (Socket cliente = new Socket(LOCAL, PORTA)) {
 			new Thread (() -> {
 				try (BufferedReader entrada = new BufferedReader(new InputStreamReader(cliente.getInputStream()))) {
